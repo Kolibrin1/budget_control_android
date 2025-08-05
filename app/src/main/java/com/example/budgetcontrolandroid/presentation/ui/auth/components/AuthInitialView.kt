@@ -26,92 +26,71 @@ import com.example.budgetcontrolandroid.R
 import com.example.budgetcontrolandroid.presentation.components.AppButton
 import com.example.budgetcontrolandroid.presentation.theme.AppColors
 import com.example.budgetcontrolandroid.presentation.theme.AppTypography
-import com.example.budgetcontrolandroid.presentation.ui.auth.AuthEvent
-import com.example.budgetcontrolandroid.presentation.ui.auth.AuthType
-import com.example.budgetcontrolandroid.presentation.ui.auth.AuthViewModel
+import com.example.budgetcontrolandroid.presentation.ui.auth.viewmodel.AuthEvent
+import com.example.budgetcontrolandroid.presentation.ui.auth.viewmodel.AuthType
+import com.example.budgetcontrolandroid.presentation.ui.auth.viewmodel.AuthViewModel
 
 @Composable
 fun AuthInitialView(
     modifier: Modifier = Modifier,
     authViewModel: AuthViewModel,
-    goLoginOrReg: () -> Unit,
 ) {
-    Scaffold(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(AppColors.background),
-        topBar = {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
-                    .background(AppColors.background),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("Авторизация", style = AppTypography.textTheme.headlineLarge)
-            }
-        }
-    ) { pad ->
+    Column(
+        modifier = modifier,
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         Column(
-            modifier = modifier
-                .padding(pad)
-                .background(AppColors.background),
+            modifier = Modifier
+                .weight(10f)
+                .fillMaxHeight(),
+            verticalArrangement = Arrangement.Center
         ) {
-            Column(
-                modifier = Modifier
-                    .weight(10f)
-                    .fillMaxHeight(),
-                verticalArrangement = Arrangement.Center
-            ) {
-                Image(
-                    painter = painterResource(R.drawable.init),
-                    contentDescription = "Profile Image",
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Text(
-                    "Добро пожаловать в ваш личный помощник финансов! Контролируйте свой бюджет и ваши расходы!",
-                    style = AppTypography.textTheme.titleLarge.copy(textAlign = TextAlign.Center),
-                    modifier = Modifier.padding(16.dp, top = 48.dp),
-                )
-            }
-            Spacer(modifier = Modifier.weight(0.5f))
-            AppButton(
-                fontWeight = FontWeight.W600,
-                radius = 10.0,
-                padding = 16.0,
-                fontSize = 16.0,
-                title = "Войти",
-                onClick =  {
-                    authViewModel.setEvent(AuthEvent.GoLoginRegister(type = AuthType.Login))
-                    goLoginOrReg()
-                },
-                gradientColors = listOf(
-                    AppColors.complementaryBlue,
-                    AppColors.primary,
-                    AppColors.primary,
-                    AppColors.complementaryBlue
-                )
+            Image(
+                painter = painterResource(R.drawable.init),
+                contentDescription = "Profile Image",
+                modifier = Modifier.fillMaxWidth()
             )
-            AppButton(
-                modifier = Modifier.padding(bottom = 24.dp),
-                fontWeight = FontWeight.W600,
-                radius = 10.0,
-                padding = 16.0,
-                fontSize = 16.0,
-                title = "Зарегистрироваться",
-                onClick = {
-                    authViewModel.setEvent(AuthEvent.GoLoginRegister(type = AuthType.Register))
-                    goLoginOrReg()
-                },
-                gradientColors = listOf(
-                    AppColors.complementaryBlue,
-                    AppColors.primary,
-                    AppColors.primary,
-                    AppColors.complementaryBlue
-                )
+            Text(
+                "Добро пожаловать в ваш личный помощник финансов! Контролируйте свой бюджет и ваши расходы!",
+                style = AppTypography.textTheme.titleLarge.copy(textAlign = TextAlign.Center),
+                modifier = Modifier.padding(16.dp, top = 48.dp),
             )
         }
+        Spacer(modifier = Modifier.weight(0.5f))
+        AppButton(
+            fontWeight = FontWeight.W600,
+            radius = 10.0,
+            padding = 16.0,
+            fontSize = 16.0,
+            title = "Войти",
+            onClick = {
+                authViewModel.setEvent(AuthEvent.GoLoginRegister(type = AuthType.Login))
+            },
+            gradientColors = listOf(
+                AppColors.complementaryBlue,
+                AppColors.primary,
+                AppColors.primary,
+                AppColors.complementaryBlue
+            )
+        )
+        AppButton(
+            modifier = Modifier.padding(bottom = 24.dp),
+            fontWeight = FontWeight.W600,
+            radius = 10.0,
+            padding = 16.0,
+            fontSize = 16.0,
+            title = "Зарегистрироваться",
+            onClick = {
+                authViewModel.setEvent(AuthEvent.GoLoginRegister(type = AuthType.Register))
+            },
+            gradientColors = listOf(
+                AppColors.complementaryBlue,
+                AppColors.primary,
+                AppColors.primary,
+                AppColors.complementaryBlue
+            )
+        )
     }
 }
 
@@ -120,6 +99,5 @@ fun AuthInitialView(
 private fun AuthInitialPreview() {
     AuthInitialView(
         authViewModel = hiltViewModel(),
-        goLoginOrReg = {},
     )
 }

@@ -1,10 +1,8 @@
 package com.example.budgetcontrolandroid.data.remote.models
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import com.google.gson.annotations.SerializedName
 
-@Serializable
 data class TokenResponseDto (
-    @SerialName("access_token") val accessToken: String,
-    @SerialName("refresh_token") val refreshToken: String
+    @SerializedName("access_token") val accessToken: String,
+    @SerializedName("refresh_token") val refreshToken: String
 )

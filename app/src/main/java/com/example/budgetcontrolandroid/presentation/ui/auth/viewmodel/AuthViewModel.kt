@@ -1,11 +1,10 @@
-package com.example.budgetcontrolandroid.presentation.ui.auth
+package com.example.budgetcontrolandroid.presentation.ui.auth.viewmodel
 
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
@@ -14,10 +13,8 @@ import com.example.budgetcontrolandroid.domain.usecases.GetCheckUserUseCase
 import com.example.budgetcontrolandroid.domain.usecases.LoginUseCase
 import com.example.budgetcontrolandroid.domain.usecases.RegisterUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.math.log
 
 @HiltViewModel
 class AuthViewModel @Inject constructor(
@@ -29,7 +26,7 @@ class AuthViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val _state: MutableState<AuthState> = mutableStateOf(
-        savedStateHandle.get<String>("authState")?.let { restoreState(it) } ?: AuthState.Loading
+        savedStateHandle.get<String>("authState")?.let { restoreState(it) } ?: AuthState.Initial
     )
 
     val state: State<AuthState> = _state
@@ -80,22 +77,9 @@ class AuthViewModel @Inject constructor(
         _confirmPassObscured.value = !_confirmPassObscured.value
     }
 
-    init {
-        viewModelScope.launch {
-            val savedToken: String = tokenRepository.getAccessToken()
-            if (savedToken.isNotEmpty()) {
-                _state.value = AuthState.AuthSuccess
-            } else {
-                _state.value = AuthState.Initial
-            }
-            saveState()
-        }
-    }
-
     fun setEvent(event: AuthEvent) {
         when (event) {
             is AuthEvent.Initial -> {
-                event.goBack()
                 _state.value = AuthState.Initial
                 saveState()
                 clearStates()
@@ -109,6 +93,11 @@ class AuthViewModel @Inject constructor(
             }
 
             is AuthEvent.Login -> {
+                if (validateFields().message != null) {
+                    error = validateFields()
+                    return
+                }
+                _state.value = AuthState.Loading
                 viewModelScope.launch {
                     try {
                         val response = loginUseCase(login, password)
@@ -117,37 +106,55 @@ class AuthViewModel @Inject constructor(
                         saveState()
                         clearStates()
                     } catch (e: Exception) {
+                        _state.value = AuthState.Login
                         error = AuthError(e.message ?: "Неизвестная ошибка", ErrorType.Login)
                     }
                 }
             }
 
             is AuthEvent.Register -> {
-                if (password != confirmPassword) {
-                    error = AuthError("Пароли не совпадают", ErrorType.Password)
+                val validation = validateFields()
+                if (validation.message != null) {
+                    error = validation
+                    _state.value = AuthState.Register
                     return
                 }
                 _state.value = AuthState.Loading
                 viewModelScope.launch {
-                    val check = getCheckUserUseCase(login)
-                    if (!check) {
-                        try {
-                            val response =
-                                registerUseCase(login, password, balance.toDouble())
-                            tokenRepository.saveTokens(response.accessToken, response.refreshToken)
-                            _state.value = AuthState.AuthSuccess
-                            saveState()
-                            clearStates()
-                        } catch (e: Exception) {
+                    try {
+                        val check = getCheckUserUseCase(login)
+                        if (!check) {
+                            try {
+                                val response =
+                                    registerUseCase(login, password, balance.toDouble())
+                                tokenRepository.saveTokens(response.accessToken, response.refreshToken)
+                                _state.value = AuthState.AuthSuccess
+                                saveState()
+                                clearStates()
+                            } catch (e: Exception) {
+                                _state.value = AuthState.Register
+                                error = AuthError(e.message ?: "Неизвестная ошибка", ErrorType.Login)
+                            }
+                        } else {
                             _state.value = AuthState.Register
-                            error = AuthError(e.message ?: "Неизвестная ошибка", ErrorType.Login)
+                            error = AuthError("Данный логин занят", ErrorType.Login)
                         }
-                    } else {
+                    } catch (e: Exception) {
                         _state.value = AuthState.Register
-                        error = AuthError("Данный логин занят", ErrorType.Login)
+                        error = AuthError(e.message ?: "Ошибка сети", ErrorType.Login)
                     }
+
                 }
             }
+        }
+    }
+
+    private fun validateFields(): AuthError {
+        return when {
+            login.isEmpty() -> AuthError("Логин не может быть пустым", ErrorType.Login)
+            password.isEmpty() -> AuthError("Пароль не может быть пустым", ErrorType.Password)
+            _state.value is AuthState.Register && password != confirmPassword -> AuthError("Пароли не совпадают", ErrorType.Password)
+            else -> AuthError()
         }
     }
 
@@ -169,8 +176,6 @@ class AuthViewModel @Inject constructor(
             "LOGIN" -> AuthState.Login
             "REGISTER" -> AuthState.Register
             "AUTH_SUCCESS" -> AuthState.AuthSuccess
-
-
             else -> AuthState.Loading
         }
     }
@@ -186,7 +191,7 @@ class AuthViewModel @Inject constructor(
 
 
 sealed class AuthEvent {
-    data class Initial(val goBack: () -> Unit) : AuthEvent()
+    data object Initial : AuthEvent()
     data class GoLoginRegister(val type: AuthType) : AuthEvent()
     data object Login : AuthEvent()
     data object Register : AuthEvent()
@@ -206,8 +211,6 @@ sealed class AuthState {
     data object Loading : AuthState()
     data object Initial : AuthState()
     data object Login : AuthState()
-
     data object Register : AuthState()
-
     data object AuthSuccess : AuthState()
 }

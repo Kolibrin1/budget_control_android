@@ -1,10 +1,12 @@
 package com.example.budgetcontrolandroid.data.repositories
 
+import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.lifecycle.SavedStateHandle
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -24,17 +26,32 @@ class TokenRepository @Inject constructor(
             preferences[ACCESS_TOKEN_KEY] = accessToken
             preferences[REFRESH_TOKEN_KEY] = refreshToken
         }
+        Log.d("TokenRepository", "Saved tokens: access=$accessToken, refresh=$refreshToken")
     }
 
-    suspend fun getAccessToken() : String {
+    fun getAccessTokenFlow(): Flow<String> {
         return dataStore.data.map { preferences ->
             preferences[ACCESS_TOKEN_KEY] ?: ""
-        }.first()
+        }
     }
 
-    suspend fun getRefreshToken() : String {
+    suspend fun getAccessToken(): String {
+        return getAccessTokenFlow().first()
+    }
+
+    fun getRefreshTokenFlow(): Flow<String> {
         return dataStore.data.map { preferences ->
             preferences[REFRESH_TOKEN_KEY] ?: ""
-        }.first()
+        }
+    }
+
+    suspend fun getRefreshToken(): String {
+        return getRefreshTokenFlow().first()
+    }
+
+    suspend fun clearTokens() {
+        dataStore.edit { preferences ->
+            preferences.clear()
+        }
     }
 }
