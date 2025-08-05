@@ -29,7 +29,12 @@ fun AppButton(
     onClick: () -> Unit,
     isDisabled: Boolean = false,
     padding: Double = 2.0,
-    gradientColors: List<Color>,
+    gradientColors: List<Color> = listOf(
+        AppColors.complementaryBlue,
+        AppColors.primary,
+        AppColors.primary,
+        AppColors.complementaryBlue
+    ),
     icon: @Composable (() -> Unit)? = null,
     height: Double? = null,
     radius: Double? = 12.0,

@@ -189,28 +189,8 @@ class AuthViewModel @Inject constructor(
     }
 }
 
-
-sealed class AuthEvent {
-    data object Initial : AuthEvent()
-    data class GoLoginRegister(val type: AuthType) : AuthEvent()
-    data object Login : AuthEvent()
-    data object Register : AuthEvent()
-}
-
-enum class AuthType {
-    Login, Register
-}
-
 data class AuthError(val message: String? = null, val type: ErrorType? = null)
 
 enum class ErrorType {
     Login, Password
-}
-
-sealed class AuthState {
-    data object Loading : AuthState()
-    data object Initial : AuthState()
-    data object Login : AuthState()
-    data object Register : AuthState()
-    data object AuthSuccess : AuthState()
 }
