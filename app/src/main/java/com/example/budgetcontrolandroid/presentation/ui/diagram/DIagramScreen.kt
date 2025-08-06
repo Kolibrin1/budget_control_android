@@ -36,6 +36,8 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.DateRangePicker
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberDateRangePickerState
 import androidx.compose.runtime.collectAsState
@@ -52,6 +54,7 @@ import coil.decode.SvgDecoder
 import coil.request.ImageRequest
 import com.example.budgetcontrolandroid.data.remote.models.ExpenseDto
 import com.example.budgetcontrolandroid.presentation.theme.AppColors
+import com.example.budgetcontrolandroid.presentation.theme.AppTypography
 import com.example.budgetcontrolandroid.presentation.ui.auth.components.DisplayGifFromDrawable
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -89,7 +92,44 @@ fun DiagramScreen(
         }
     }
 
-    Scaffold { pad ->
+    Scaffold(
+        topBar = {
+            Row(
+                modifier = Modifier
+                    .padding(top = 24.dp)
+                    .fillMaxWidth()
+                    .height(52.dp)
+                    .background(AppColors.background)
+                    .padding(8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Spacer(modifier = Modifier.size(42.dp, 42.dp))
+                Text(
+                    "Диаграмма",
+                    style = AppTypography.textTheme.headlineLarge
+                )
+                IconButton(
+                    onClick = {
+
+                    },
+                    colors = IconButtonDefaults.iconButtonColors(contentColor = AppColors.white)
+                ) {
+                    AsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data("file:///android_asset/icons/info.svg")
+                            .decoderFactory(SvgDecoder.Factory())
+                            .crossfade(true)
+                            .build(),
+                        colorFilter = ColorFilter.tint(AppColors.primary),
+                        contentDescription = "file:///android_asset/icons/info.svg",
+                        modifier = Modifier
+                            .size(24.dp)
+                    )
+                }
+            }
+        },
+    ) { pad ->
         Column(
             modifier = Modifier.padding(pad).fillMaxSize().background(AppColors.background),
             horizontalAlignment = Alignment.CenterHorizontally

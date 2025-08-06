@@ -9,9 +9,13 @@ import com.example.budgetcontrolandroid.data.remote.client.interceptors.AuthInte
 import com.example.budgetcontrolandroid.data.remote.client.interceptors.TokenAuthenticator
 import com.example.budgetcontrolandroid.data.repositories.AuthRepositoryImpl
 import com.example.budgetcontrolandroid.data.repositories.ExpenseRepositoryImpl
+import com.example.budgetcontrolandroid.data.repositories.IncomeRepositoryImpl
+import com.example.budgetcontrolandroid.data.repositories.ProfileRepositoryImpl
 import com.example.budgetcontrolandroid.data.repositories.TokenRepository
 import com.example.budgetcontrolandroid.domain.repositories.AuthRepository
 import com.example.budgetcontrolandroid.domain.repositories.ExpenseRepository
+import com.example.budgetcontrolandroid.domain.repositories.IncomeRepository
+import com.example.budgetcontrolandroid.domain.repositories.ProfileRepository
 import com.example.budgetcontrolandroid.domain.usecases.auth.RefreshTokenUseCase
 import com.google.gson.Gson
 import dagger.Module
@@ -92,4 +96,14 @@ object AppModule {
     @Singleton
     fun providesExpenseRepository(apiService: ApiService): ExpenseRepository =
         ExpenseRepositoryImpl(apiService)
+
+    @Provides
+    @Singleton
+    fun providesIncomeRepository(apiService: ApiService): IncomeRepository =
+        IncomeRepositoryImpl(apiService)
+
+    @Provides
+    @Singleton
+    fun providesProfileRepository(apiService: ApiService): ProfileRepository =
+        ProfileRepositoryImpl(apiService)
 }

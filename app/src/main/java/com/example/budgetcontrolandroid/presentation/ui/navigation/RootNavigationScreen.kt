@@ -8,7 +8,6 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -23,6 +22,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.budgetcontrolandroid.presentation.theme.AppColors
 import com.example.budgetcontrolandroid.presentation.ui.diagram.DiagramScreen
+import com.example.budgetcontrolandroid.presentation.ui.profile.ProfileScreen
 
 @Composable
 fun RootNavigationScreen() {
@@ -40,7 +40,8 @@ fun RootNavigationScreen() {
                         shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
                         ambientColor = AppColors.primary.copy(alpha = 0.15f),
                         spotColor = AppColors.primary.copy(alpha = 0.15f)
-                    ).height(80.dp),
+                    )
+                    .height(80.dp),
                 containerColor = AppColors.onBackground.copy(alpha = 0.94f),
                 contentColor = Color.Transparent
             ) {
@@ -78,14 +79,17 @@ fun RootNavigationScreen() {
         },
         content = { innerPadding ->
             NavHost(navController = navController, startDestination = "diagram") {
-                composable("diagram") { DiagramScreen(modifier = Modifier.padding(innerPadding).background(AppColors.background)) }
-                composable("profile") { ProfileScreen(modifier = Modifier.padding(innerPadding)) }
+                composable("diagram") {
+                    DiagramScreen(
+                        modifier = Modifier
+                            .padding(innerPadding)
+                            .background(AppColors.background)
+                    )
+                }
+                composable("profile") {
+                    ProfileScreen(modifier = Modifier.padding(innerPadding))
+                }
             }
         }
     )
-}
-
-@Composable
-fun ProfileScreen(modifier: Modifier) {
-    Text("Profile Screen", modifier = modifier)
 }

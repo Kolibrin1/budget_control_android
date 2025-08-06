@@ -1,8 +1,11 @@
 package com.example.budgetcontrolandroid.data.remote.client
 
 import com.example.budgetcontrolandroid.data.remote.models.ExpenseDto
+import com.example.budgetcontrolandroid.data.remote.models.IncomeDto
+import com.example.budgetcontrolandroid.data.remote.models.ProfileDto
 import com.example.budgetcontrolandroid.data.remote.models.TokenResponseDto
 import com.example.budgetcontrolandroid.data.repositories.ExpenseRequest
+import com.example.budgetcontrolandroid.data.repositories.IncomeRequest
 import com.example.budgetcontrolandroid.data.repositories.LoginRequest
 import com.example.budgetcontrolandroid.data.repositories.RegisterRequest
 import retrofit2.http.Body
@@ -57,4 +60,26 @@ interface ApiService {
     suspend fun deleteExpense(
         @Path("id") id: Int,
     ) : Boolean
+
+    @GET("/incomes/my")
+    suspend fun getAllIncomes() : List<IncomeDto>
+
+    @POST("/incomes/")
+    suspend fun addIncome(
+        @Body data: IncomeRequest,
+    ) : IncomeDto
+
+    @PUT("/incomes/{id}")
+    suspend fun updateIncome(
+        @Path("id") id: Int,
+        @Body data: IncomeRequest
+    ) : IncomeDto
+
+    @DELETE("/incomes/{id}")
+    suspend fun deleteIncome(
+        @Path("id") id: Int,
+    ) : Boolean
+
+    @GET("/users/me")
+    suspend fun getCurrentUser() : ProfileDto
 }
