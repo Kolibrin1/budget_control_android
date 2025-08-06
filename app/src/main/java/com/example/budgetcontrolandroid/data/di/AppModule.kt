@@ -5,9 +5,14 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.preferencesDataStore
 import com.example.budgetcontrolandroid.data.remote.client.ApiService
+import com.example.budgetcontrolandroid.data.remote.client.interceptors.AuthInterceptor
+import com.example.budgetcontrolandroid.data.remote.client.interceptors.TokenAuthenticator
 import com.example.budgetcontrolandroid.data.repositories.AuthRepositoryImpl
+import com.example.budgetcontrolandroid.data.repositories.ExpenseRepositoryImpl
 import com.example.budgetcontrolandroid.data.repositories.TokenRepository
 import com.example.budgetcontrolandroid.domain.repositories.AuthRepository
+import com.example.budgetcontrolandroid.domain.repositories.ExpenseRepository
+import com.example.budgetcontrolandroid.domain.usecases.auth.RefreshTokenUseCase
 import com.google.gson.Gson
 import dagger.Module
 import dagger.Provides
@@ -17,6 +22,7 @@ import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import javax.inject.Provider
 import javax.inject.Singleton
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "auth_prefs")
@@ -37,7 +43,31 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun providesOkHttpClient(): OkHttpClient = OkHttpClient.Builder().build()
+    fun providesAuthInterceptor(
+        tokenRepository: TokenRepository,
+    ): AuthInterceptor = AuthInterceptor(tokenRepository)
+
+    @Provides
+    @Singleton
+    fun providesTokenAuthenticator(
+        tokenRepository: TokenRepository,
+        refreshTokenUseCaseProvider: Provider<RefreshTokenUseCase>
+    ): TokenAuthenticator = TokenAuthenticator(tokenRepository, refreshTokenUseCaseProvider)
+
+    @Provides
+    @Singleton
+    fun providesRefreshTokenUseCase(authRepository: AuthRepository): RefreshTokenUseCase =
+        RefreshTokenUseCase(authRepository)
+
+    @Provides
+    @Singleton
+    fun providesOkHttpClient(
+        authInterceptor: AuthInterceptor,
+        tokenAuthenticator: TokenAuthenticator
+    ): OkHttpClient = OkHttpClient.Builder()
+            .addInterceptor(authInterceptor)
+            .authenticator(tokenAuthenticator)
+            .build()
 
     @Provides
     @Singleton
@@ -57,4 +87,9 @@ object AppModule {
     @Singleton
     fun providesAuthRepository(apiService: ApiService): AuthRepository =
         AuthRepositoryImpl(apiService)
+
+    @Provides
+    @Singleton
+    fun providesExpenseRepository(apiService: ApiService): ExpenseRepository =
+        ExpenseRepositoryImpl(apiService)
 }

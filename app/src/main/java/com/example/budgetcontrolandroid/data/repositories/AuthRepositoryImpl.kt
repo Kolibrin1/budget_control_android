@@ -24,6 +24,10 @@ class AuthRepositoryImpl(
     ): TokenResponseDto {
         return apiService.register(RegisterRequest(login, password, balance))
     }
+
+    override suspend fun refresh(refreshToken: String) : TokenResponseDto {
+        return apiService.refresh(refreshToken)
+    }
 }
 
 data class RegisterRequest(

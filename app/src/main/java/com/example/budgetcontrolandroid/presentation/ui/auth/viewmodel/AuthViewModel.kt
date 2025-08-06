@@ -9,9 +9,9 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.example.budgetcontrolandroid.data.repositories.TokenRepository
-import com.example.budgetcontrolandroid.domain.usecases.GetCheckUserUseCase
-import com.example.budgetcontrolandroid.domain.usecases.LoginUseCase
-import com.example.budgetcontrolandroid.domain.usecases.RegisterUseCase
+import com.example.budgetcontrolandroid.domain.usecases.auth.GetCheckUserUseCase
+import com.example.budgetcontrolandroid.domain.usecases.auth.LoginUseCase
+import com.example.budgetcontrolandroid.domain.usecases.auth.RegisterUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import javax.inject.Inject

@@ -8,4 +8,6 @@ interface AuthRepository {
     suspend fun login(login: String, password: String) : TokenResponseDto
 
     suspend fun register(login: String, password: String, balance: Double) : TokenResponseDto
+
+    suspend fun refresh(refreshToken: String) : TokenResponseDto
 }
