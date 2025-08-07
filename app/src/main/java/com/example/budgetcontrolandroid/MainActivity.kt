@@ -12,13 +12,15 @@ import com.example.budgetcontrolandroid.data.repositories.TokenRepository
 import com.example.budgetcontrolandroid.presentation.theme.BudgetControlAndroidTheme
 import com.example.budgetcontrolandroid.presentation.ui.auth.AuthScreen
 import com.example.budgetcontrolandroid.presentation.ui.auth.viewmodel.AuthViewModel
+import com.example.budgetcontrolandroid.presentation.ui.category.CategoryViewModel
 import com.example.budgetcontrolandroid.presentation.ui.navigation.RootNavigationScreen
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    @Inject lateinit var tokenRepository: TokenRepository
+    @Inject
+    lateinit var tokenRepository: TokenRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,8 +37,13 @@ class MainActivity : ComponentActivity() {
 
 
 @Composable
-fun AuthFlow(authViewModel: AuthViewModel, tokenRepository: TokenRepository) {
+fun AuthFlow(
+    authViewModel: AuthViewModel,
+    tokenRepository: TokenRepository,
+    categoryViewModel: CategoryViewModel = hiltViewModel()
+) {
     val accessToken by tokenRepository.getAccessTokenFlow().collectAsState(initial = "")
+    val categories by categoryViewModel.categories.collectAsState()
 //    val state by authViewModel.state
 
     // Лог для отладки

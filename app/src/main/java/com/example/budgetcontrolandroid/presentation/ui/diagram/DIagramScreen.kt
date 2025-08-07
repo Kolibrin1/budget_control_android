@@ -35,17 +35,22 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DateRangePicker
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberDateRangePickerState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.wear.compose.material.ExperimentalWearMaterialApi
 import androidx.wear.compose.material.rememberSwipeableState
 import androidx.wear.compose.material.swipeable
@@ -56,12 +61,16 @@ import com.example.budgetcontrolandroid.data.remote.models.ExpenseDto
 import com.example.budgetcontrolandroid.presentation.theme.AppColors
 import com.example.budgetcontrolandroid.presentation.theme.AppTypography
 import com.example.budgetcontrolandroid.presentation.ui.auth.components.DisplayGifFromDrawable
+import com.example.budgetcontrolandroid.presentation.ui.profile.toComposeColor
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDate
+import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DiagramScreen(
     modifier: Modifier,
@@ -71,25 +80,71 @@ fun DiagramScreen(
     val selectedType by diagramViewModel.selectedType.collectAsState()
     val context = LocalContext.current
 
+    val configuration = LocalConfiguration.current
+    val screenHeight = configuration.screenHeightDp.dp
+
     var showDatePicker by remember { mutableStateOf(false) }
     if (showDatePicker) {
         val datePickerState = rememberDateRangePickerState()
-        DateRangePicker(
-            state = datePickerState,
-            modifier = Modifier.padding(16.dp)
+        ModalBottomSheet(
+            containerColor = AppColors.background,
+            sheetState = rememberModalBottomSheetState(
+                skipPartiallyExpanded = true
+            ),
+            onDismissRequest = { showDatePicker = false },
+            content = {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight() // Адаптируется под контент
+                        .padding(16.dp)
+                ) {
+                    Text("Выберите период", modifier = Modifier.padding(bottom = 12.dp))
+                    DateRangePicker(
+                        showModeToggle = false,
+                        state = datePickerState,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(screenHeight * 0.5f)
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Button(
+                            colors = ButtonDefaults.buttonColors(containerColor = AppColors.primary),
+                            onClick = {
+                                val startMillis = datePickerState.selectedStartDateMillis
+                                val endMillis = datePickerState.selectedEndDateMillis
+                                if (startMillis != null && endMillis != null) {
+                                    val start = Instant.fromEpochMilliseconds(startMillis)
+                                        .toLocalDateTime(TimeZone.UTC)
+                                        .date
+                                        .toJavaLocalDate()
+                                    val end = Instant.fromEpochMilliseconds(endMillis)
+                                        .toLocalDateTime(TimeZone.UTC)
+                                        .date
+                                        .toJavaLocalDate()
+                                    diagramViewModel.onCustomPeriodSelected(start, end)
+                                }
+                                showDatePicker = false
+                            }
+                        ) {
+                            Text("Подтвердить")
+                        }
+                        Button(
+                            onClick = { showDatePicker = false },
+                            colors = ButtonDefaults.buttonColors(containerColor = AppColors.primary),
+                        ) {
+                            Text("Отмена")
+                        }
+                    }
+                }
+            },
         )
-        Button(onClick = {
-            val startMillis = datePickerState.selectedStartDateMillis
-            val endMillis = datePickerState.selectedEndDateMillis
-            if (startMillis != null && endMillis != null) {
-                val start = Instant.fromEpochMilliseconds(startMillis).toLocalDateTime(timeZone = TimeZone.UTC).date.toJavaLocalDate()
-                val end = Instant.fromEpochMilliseconds(endMillis).toLocalDateTime(timeZone = TimeZone.UTC).date.toJavaLocalDate()
-                diagramViewModel.onCustomPeriodSelected(start, end)
-            }
-            showDatePicker = false
-        }) {
-            Text("Подтвердить")
-        }
     }
 
     Scaffold(
@@ -131,7 +186,15 @@ fun DiagramScreen(
         },
     ) { pad ->
         Column(
-            modifier = Modifier.padding(pad).fillMaxSize().background(AppColors.background),
+            modifier = Modifier
+                .background(AppColors.background)
+                .padding(
+                    top = 52.dp,
+                    start = pad.calculateLeftPadding(layoutDirection = LayoutDirection.Ltr),
+                    end = pad.calculateEndPadding(layoutDirection = LayoutDirection.Ltr),
+                    bottom = 80.dp
+                )
+                .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             val currentType =
@@ -195,7 +258,7 @@ fun DiagramScreen(
                         items(successState.expenses.size) { index ->
                             ExpenseRow(
                                 expense = successState.expenses[index],
-                                onEdit = { /* TODO: */},
+                                onEdit = { /* TODO: */ },
                                 onDelete = { diagramViewModel.deleteExpense(it.id) },
                                 currency = "RUB"
                             )
@@ -207,18 +270,6 @@ fun DiagramScreen(
     }
 }
 
-fun mapCategory(categoryId: Int): Triple<String, String, Color> {
-    return when (categoryId) {
-        1 -> Triple("Еда", "file:///android_asset/icons/categories/icon_1.svg", Color(0xFF4CAF50))
-        2 -> Triple("Напитки", "file:///android_asset/icons/categories/icon_2.svg", Color(0xFFFFA726))
-        3 -> Triple("Развлечения", "file:///android_asset/icons/categories/icon_3.svg", Color(0xFFE91E63))
-        4 -> Triple("Одежда", "file:///android_asset/icons/categories/icon_4.svg", Color(0xFFF44336))
-        else -> Triple("Неизвестно", "file:///android_asset/icons/categories/default.svg", Color.Gray)
-    }
-}
-
-
-
 @OptIn(ExperimentalWearMaterialApi::class)
 @Composable
 fun ExpenseRow(
@@ -227,7 +278,6 @@ fun ExpenseRow(
     onEdit: (ExpenseDto) -> Unit,
     onDelete: (ExpenseDto) -> Unit
 ) {
-    val (categoryName, iconUrl, categoryColor) = mapCategory(expense.categoryId)
 
     val configuration = LocalConfiguration.current
     val screenWidth = configuration.screenWidthDp
@@ -299,17 +349,17 @@ fun ExpenseRow(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(CircleShape)
-                        .background(categoryColor)
+                        .background(expense.category?.color?.toComposeColor() ?: AppColors.primary)
                 ) {
                     val context = LocalContext.current
                     AsyncImage(
                         model = ImageRequest.Builder(context)
-                            .data(iconUrl)
+                            .data("file:///android_asset/" + expense.category?.icon)
                             .decoderFactory(SvgDecoder.Factory())
                             .crossfade(true)
                             .build(),
                         colorFilter = ColorFilter.tint(AppColors.white),
-                        contentDescription = iconUrl,
+                        contentDescription = expense.category?.icon,
                         modifier = Modifier
                             .size(30.dp)
                             .align(alignment = Alignment.Center)
@@ -319,7 +369,7 @@ fun ExpenseRow(
                 Spacer(modifier = Modifier.width(20.dp))
                 Column {
                     Text(
-                        text = categoryName,
+                        text = expense.category?.name ?: "Неизвестная категория",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
                         color = Color.Black
@@ -332,7 +382,8 @@ fun ExpenseRow(
                 }
             }
             Text(
-                text = expense.date.toString(),
+                text = expense.date.toLocalDateTime(TimeZone.UTC).toJavaLocalDateTime()
+                    .format(DateTimeFormatter.ofPattern("yyyy\nMM.dd")).toString(),
                 fontSize = 12.sp,
                 color = Color.Black,
                 textAlign = TextAlign.Center
@@ -342,7 +393,14 @@ fun ExpenseRow(
 }
 
 @Composable
-fun ActionButton(modifier: Modifier,icon: ImageVector, label: String, color: Color, backgroundColor: Color, onClick: () -> Unit) {
+fun ActionButton(
+    modifier: Modifier,
+    icon: ImageVector,
+    label: String,
+    color: Color,
+    backgroundColor: Color,
+    onClick: () -> Unit
+) {
     Column(
         modifier = modifier
             .fillMaxHeight()
@@ -366,10 +424,6 @@ fun ActionButton(modifier: Modifier,icon: ImageVector, label: String, color: Col
 }
 
 data class CustomPeriod(val dateFrom: LocalDate, val dateTo: LocalDate)
-data class DiagramStates(
-    val selectedType: Int = 1,
-    val customPeriod: CustomPeriod? = null
-)
 
 @Composable
 fun FilterPanel(
@@ -388,7 +442,7 @@ fun FilterPanel(
     Box(
         modifier = Modifier
             .padding(top = 32.dp)
-            .padding(horizontal = 16.dp, vertical = 10.dp,)
+            .padding(horizontal = 16.dp, vertical = 10.dp)
             .shadow(
                 16.dp,
                 RoundedCornerShape(16.dp),

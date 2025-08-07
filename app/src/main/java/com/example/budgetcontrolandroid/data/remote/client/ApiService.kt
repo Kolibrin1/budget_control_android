@@ -1,9 +1,11 @@
 package com.example.budgetcontrolandroid.data.remote.client
 
+import com.example.budgetcontrolandroid.data.remote.models.CategoryDto
 import com.example.budgetcontrolandroid.data.remote.models.ExpenseDto
 import com.example.budgetcontrolandroid.data.remote.models.IncomeDto
 import com.example.budgetcontrolandroid.data.remote.models.ProfileDto
 import com.example.budgetcontrolandroid.data.remote.models.TokenResponseDto
+import com.example.budgetcontrolandroid.data.repositories.CategoryRequest
 import com.example.budgetcontrolandroid.data.repositories.ExpenseRequest
 import com.example.budgetcontrolandroid.data.repositories.IncomeRequest
 import com.example.budgetcontrolandroid.data.repositories.LoginRequest
@@ -82,4 +84,17 @@ interface ApiService {
 
     @GET("/users/me")
     suspend fun getCurrentUser() : ProfileDto
+
+    @GET("/categories/my")
+    suspend fun getAllCategories() : List<CategoryDto>
+
+    @POST("/categories/")
+    suspend fun addCategory(
+        @Body data: CategoryRequest
+    ) : CategoryDto
+
+    @DELETE("/categories/{id}")
+    suspend fun deleteCategory(
+        @Path("id") id: Int,
+    )
 }

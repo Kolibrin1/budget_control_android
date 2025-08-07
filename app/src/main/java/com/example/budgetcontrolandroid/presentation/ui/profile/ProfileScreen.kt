@@ -23,20 +23,51 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.budgetcontrolandroid.presentation.theme.AppColors
 import com.example.budgetcontrolandroid.presentation.theme.AppTypography
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
+import androidx.wear.compose.material.ExperimentalWearMaterialApi
+import androidx.wear.compose.material.rememberSwipeableState
+import androidx.wear.compose.material.swipeable
+import coil.compose.AsyncImage
+import coil.decode.SvgDecoder
+import coil.request.ImageRequest
+import com.example.budgetcontrolandroid.data.remote.models.IncomeDto
+import com.example.budgetcontrolandroid.presentation.ui.auth.components.DisplayGifFromDrawable
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toJavaLocalDateTime
+import kotlinx.datetime.toLocalDateTime
+import java.time.format.DateTimeFormatter
+import androidx.core.graphics.toColorInt
 
 @Composable
 fun ProfileScreen(
     modifier: Modifier = Modifier,
     profileViewModel: ProfileViewModel = hiltViewModel()
 ) {
+    val state by profileViewModel.state.collectAsState()
     Scaffold(
         topBar = {
             Row(
@@ -47,6 +78,7 @@ fun ProfileScreen(
                     .background(AppColors.background)
                     .padding(8.dp),
                 horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     "Профиль",
@@ -57,12 +89,57 @@ fun ProfileScreen(
     ) { pad ->
         Column(
             modifier = Modifier
+                .background(AppColors.background)
                 .padding(pad)
-                .fillMaxSize()
-                .background(AppColors.background),
+                .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            BalanceSection()
+            when (state) {
+                is ProfileState.Loading -> {
+                    DisplayGifFromDrawable()
+                }
+
+                is ProfileState.ErrorState -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = (state as ProfileState.ErrorState).message,
+                                color = Color.Red,
+                                fontSize = 16.sp
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Button(onClick = { profileViewModel.retryLoad() }) {
+                                Text("Повторить")
+                            }
+                        }
+                    }
+                }
+
+                is ProfileState.SuccessState -> {
+                    val successState = state as ProfileState.SuccessState
+                    BalanceSection(profileViewModel = profileViewModel)
+                    Text(
+                        "Список Доходов",
+                        color = Color.White,
+                        fontSize = 18.sp,
+                        modifier = Modifier.padding(top = 16.dp)
+                    )
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        items(successState.incomes.size) { index ->
+                            IncomeRow(
+                                income = successState.incomes[index],
+                                onEdit = { /* TODO: */ },
+                                onDelete = { profileViewModel.deleteIncome(it.id) },
+                                currency = "RUB"
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -70,9 +147,7 @@ fun ProfileScreen(
 @Composable
 fun BalanceSection(
     modifier: Modifier = Modifier,
-    balance: Double = 8708.0,
-    currency: String = "RUB",
-    username: String = "GeorgiyK",
+    profileViewModel: ProfileViewModel,
     onAddExpenseClick: () -> Unit = {},
     onAddIncomeClick: () -> Unit = {}
 ) {
@@ -82,9 +157,7 @@ fun BalanceSection(
     ) {
         Spacer(modifier = Modifier.height(12.dp))
         BalanceRow(
-            balance = balance,
-            currency = currency,
-            username = username
+            profileViewModel = profileViewModel
         )
         Spacer(modifier = Modifier.height(25.dp))
         ActionRow(
@@ -101,10 +174,10 @@ fun BalanceSection(
 
 @Composable
 private fun BalanceRow(
-    balance: Double,
-    currency: String,
-    username: String
+    profileViewModel: ProfileViewModel
 ) {
+
+    val profile = profileViewModel.profile.collectAsState().value
     val gradientColors = listOf(
         AppColors.primary,
         AppColors.primary,
@@ -121,7 +194,7 @@ private fun BalanceRow(
             .shadow(
                 elevation = 15.dp,
                 shape = RoundedCornerShape(20.dp),
-                ambientColor = Color(0xFF673AB7).copy(alpha = 0.3f)  // AppColors.primary opacity
+                ambientColor = AppColors.primary.copy(alpha = 0.3f)
             )
             .background(Brush.linearGradient(gradientColors))
             .padding(vertical = 24.dp, horizontal = 20.dp)
@@ -138,7 +211,7 @@ private fun BalanceRow(
                     color = Color.White.copy(alpha = 0.8f)
                 )
                 Text(
-                    text = username,
+                    text = profile.login,
                     style = AppTypography.textTheme.displaySmall,
                     fontWeight = FontWeight.W600,
                 )
@@ -148,13 +221,13 @@ private fun BalanceRow(
                 verticalAlignment = Alignment.Bottom
             ) {
                 Text(
-                    text = "$balance",
+                    text = "${profile.balance}",
                     style = AppTypography.textTheme.headlineLarge,
                     fontWeight = FontWeight.Bold,
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = currency,
+                    text = profile.currency,
                     style = AppTypography.textTheme.titleLarge,
                 )
             }
@@ -190,9 +263,168 @@ private fun ActionRow(
         )
         Text(
             text = label,
-            style = AppTypography.textTheme.titleMedium.copy(brush = Brush.linearGradient(gradientColors)),
+            style = AppTypography.textTheme.titleMedium.copy(
+                brush = Brush.linearGradient(
+                    gradientColors
+                )
+            ),
             modifier = Modifier
                 .padding(start = 8.dp)
+        )
+    }
+}
+
+@OptIn(ExperimentalWearMaterialApi::class)
+@Composable
+fun IncomeRow(
+    income: IncomeDto,
+    currency: String,
+    onEdit: (IncomeDto) -> Unit,
+    onDelete: (IncomeDto) -> Unit
+) {
+    val configuration = LocalConfiguration.current
+    val screenWidth = configuration.screenWidthDp
+    val buttonWidth = screenWidth.dp * 0.2f
+
+    val swipeableState = rememberSwipeableState(initialValue = 0)
+    val anchors = mapOf(
+        0f to 0,
+        -(screenWidth * 0.4f) to 1
+    )
+
+    Box(
+        modifier = Modifier
+            .padding(vertical = 4.dp)
+            .fillMaxWidth()
+            .height(49.dp)
+            .shadow(6.dp, RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(10.dp))
+            .background(Color(0xFFF5F5F5))
+            .swipeable(
+                state = swipeableState,
+                anchors = anchors,
+                orientation = Orientation.Horizontal,
+                enabled = true
+            )
+
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxHeight()
+                .fillMaxWidth()
+                .background(AppColors.complementaryBlue),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            ActionButton(
+                icon = Icons.Default.Edit,
+                label = "Изменить",
+                color = Color.White,
+                onClick = { onEdit(income) },
+                backgroundColor = AppColors.complementaryBlue,
+                modifier = Modifier.width(buttonWidth),
+            )
+            ActionButton(
+                icon = Icons.Default.Delete,
+                label = "Удалить",
+                color = Color.White,
+                onClick = { onDelete(income) },
+                backgroundColor = AppColors.primary,
+                modifier = Modifier.width(buttonWidth),
+            )
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .offset(x = swipeableState.offset.value.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(AppColors.onSecondary.copy(alpha = 0.98f))
+                .padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(income.category?.color?.toComposeColor() ?: AppColors.primary)
+                ) {
+                    val context = LocalContext.current
+                    AsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data("file:///android_asset/" + income.category?.icon)
+                            .decoderFactory(SvgDecoder.Factory())
+                            .crossfade(true)
+                            .build(),
+                        colorFilter = ColorFilter.tint(AppColors.white),
+                        contentDescription = income.category?.icon,
+                        modifier = Modifier
+                            .size(30.dp)
+                            .align(alignment = Alignment.Center)
+                    )
+
+                }
+                Spacer(modifier = Modifier.width(20.dp))
+                Column {
+                    Text(
+                        text = income.category?.name ?: "Неизвестная категория",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.Black
+                    )
+                    Text(
+                        text = "${income.totalCount} $currency",
+                        fontSize = 12.sp,
+                        color = Color.Black
+                    )
+                }
+            }
+            Text(
+                text = income.date.toLocalDateTime(TimeZone.UTC).toJavaLocalDateTime()
+                    .format(DateTimeFormatter.ofPattern("yyyy\nMM.dd")).toString(),
+                fontSize = 12.sp,
+                color = Color.Black,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}
+
+fun String.toComposeColor(): Color {
+    return Color(this.toColorInt())
+}
+
+@Composable
+fun ActionButton(
+    modifier: Modifier,
+    icon: ImageVector,
+    label: String,
+    color: Color,
+    backgroundColor: Color,
+    onClick: () -> Unit
+) {
+    Column(
+        modifier = modifier
+            .fillMaxHeight()
+            .background(backgroundColor)
+            .clickable { onClick() },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = color,
+            modifier = Modifier.size(26.dp)
+        )
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            color = color
         )
     }
 }

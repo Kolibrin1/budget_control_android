@@ -16,5 +16,6 @@ data class ExpenseDto(
     @SerializedName("category_id")
     val categoryId: Int,
     @SerializedName("user_id")
-    val userId: Int
+    val userId: Int,
+    val category: CategoryDto?
 )
