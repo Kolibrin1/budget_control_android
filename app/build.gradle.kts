@@ -75,7 +75,7 @@ dependencies {
     implementation("io.coil-kt:coil-gif:2.7.0")
     implementation("io.coil-kt:coil-svg:2.7.0")
 
-//    implementation("org.jetbrains.kotlin:kotlin-parcelize-runtime:2.2.20-Beta2")
+    implementation("com.godaddy.android.colorpicker:compose-color-picker:0.7.0")
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)

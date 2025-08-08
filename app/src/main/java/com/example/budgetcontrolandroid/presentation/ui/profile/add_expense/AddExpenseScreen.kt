@@ -204,15 +204,14 @@ fun AddExpenseScreen(
                 },
             )
         }
-
-        if (showAddCategory) {
-            AddCategoryBottomSheet(
-                onDismiss = { showAddCategory = false },
-                onCategoryAdded = { name, color, icon ->
-                    showAddCategory = false
-                }
-            )
-        }
+    }
+    if (showAddCategory) {
+        AddCategoryBottomSheet(
+            onDismiss = { showAddCategory = false },
+            onCategoryAdded = { name, color, icon ->
+                showAddCategory = false
+            }
+        )
     }
 }
 
