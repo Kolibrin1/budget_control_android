@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.budgetcontrolandroid.data.remote.models.CategoryDto
 import com.example.budgetcontrolandroid.data.remote.models.ExpenseDto
+import com.example.budgetcontrolandroid.data.remote.models.IncomeDto
 import com.example.budgetcontrolandroid.domain.repositories.CategoryRepository
 import com.example.budgetcontrolandroid.domain.usecases.expense.DeleteExpenseUseCase
 import com.example.budgetcontrolandroid.domain.usecases.expense.GetAllExpensesUseCase
@@ -16,6 +17,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import javax.inject.Inject
+import javax.inject.Singleton
 
 @HiltViewModel
 class DiagramViewModel @Inject constructor(
@@ -30,6 +32,29 @@ class DiagramViewModel @Inject constructor(
 
     private val _selectedType = MutableStateFlow<DiagramType>(DiagramType.DAY)
     val selectedType = _selectedType.asStateFlow()
+
+    private val _editingExpense = MutableStateFlow<ExpenseDto?>(null)
+
+    fun setEditingExpense(expense: ExpenseDto) {
+        _editingExpense.value = expense
+    }
+
+    fun getEditingExpense() : ExpenseDto {
+        val currentState = _editingExpense.value
+        _editingExpense.value = null
+        return currentState!!
+    }
+
+    private val _deletingExpense = MutableStateFlow<ExpenseDto?>(null)
+    var deletingExpense = _deletingExpense.asStateFlow()
+
+    fun setDeletingExpense(expense: ExpenseDto) {
+        _deletingExpense.value = expense
+    }
+
+    fun stopDeletingExpense() {
+        _deletingExpense.value = null
+    }
 
     init {
         loadExpenses(DiagramType.DAY)

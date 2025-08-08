@@ -20,9 +20,12 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.budgetcontrolandroid.presentation.theme.AppColors
 import com.example.budgetcontrolandroid.presentation.ui.diagram.DiagramScreen
 import com.example.budgetcontrolandroid.presentation.ui.profile.ProfileScreen
+import com.example.budgetcontrolandroid.presentation.ui.profile.add_expense.AddExpenseScreen
+import com.example.budgetcontrolandroid.presentation.ui.profile.add_income.AddIncomeScreen
 
 @Composable
 fun RootNavigationScreen() {
@@ -83,11 +86,36 @@ fun RootNavigationScreen() {
                     DiagramScreen(
                         modifier = Modifier
                             .padding(innerPadding)
-                            .background(AppColors.background)
+                            .background(AppColors.background),
+                        navController = navController
                     )
                 }
                 composable("profile") {
-                    ProfileScreen(modifier = Modifier.padding(innerPadding))
+                    ProfileScreen(
+                        modifier = Modifier.padding(innerPadding), navController = navController
+                    )
+                }
+                composable(
+                    "add_expense?isEdit={isEdit}",
+                    arguments = listOf(navArgument("isEdit") { defaultValue = false })
+                ) { backStackEntry ->
+
+                    val isEdit = backStackEntry.arguments?.getBoolean("isEdit") ?: false
+                    AddExpenseScreen(
+                        navController = navController,
+                        isEdit = isEdit,
+                    )
+                }
+                composable(
+                    "add_income?isEdit={isEdit}",
+                    arguments = listOf(navArgument("isEdit") { defaultValue = false })
+                ) { backStackEntry ->
+
+                    val isEdit = backStackEntry.arguments?.getBoolean("isEdit") ?: false
+                    AddIncomeScreen(
+                        navController = navController,
+                        isEdit = isEdit,
+                    )
                 }
             }
         }

@@ -3,10 +3,8 @@ package com.example.budgetcontrolandroid.data.repositories
 import com.example.budgetcontrolandroid.data.remote.client.ApiService
 import com.example.budgetcontrolandroid.data.remote.models.IncomeDto
 import com.example.budgetcontrolandroid.domain.repositories.IncomeRepository
+import com.google.gson.annotations.SerializedName
 import kotlinx.datetime.Instant
-import kotlinx.datetime.serializers.InstantIso8601Serializer
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
 import javax.inject.Inject
 
 class IncomeRepositoryImpl @Inject constructor(
@@ -26,15 +24,15 @@ class IncomeRepositoryImpl @Inject constructor(
     }
 
     override suspend fun deleteIncome(incomeId: Int): Boolean {
-        return apiService.deleteIncome(id = incomeId)
+        apiService.deleteIncome(id = incomeId)
+        return true
     }
 
 }
 
 data class IncomeRequest(
-    @SerialName("total_count") val totalCount: Double,
-    @SerialName("category_id") val categoryId: Int,
-    @SerialName("date")
-    @Serializable(with = InstantIso8601Serializer::class)
+    @SerializedName("total_count") val totalCount: Double,
+    @SerializedName("category_id") val categoryId: Int,
+    @SerializedName("date")
     val date: Instant,
 )

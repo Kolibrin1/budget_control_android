@@ -61,11 +61,16 @@ import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
 import java.time.format.DateTimeFormatter
 import androidx.core.graphics.toColorInt
+import androidx.navigation.NavController
+import androidx.navigation.NavOptions
+import com.example.budgetcontrolandroid.common.toFormattedDate
+import com.example.budgetcontrolandroid.presentation.ui.profile.components.ConfirmDialog
 
 @Composable
 fun ProfileScreen(
     modifier: Modifier = Modifier,
-    profileViewModel: ProfileViewModel = hiltViewModel()
+    navController: NavController,
+    profileViewModel: ProfileViewModel = hiltViewModel(navController.getBackStackEntry("profile"))
 ) {
     val state by profileViewModel.state.collectAsState()
     Scaffold(
@@ -117,7 +122,15 @@ fun ProfileScreen(
 
                 is ProfileState.SuccessState -> {
                     val successState = state as ProfileState.SuccessState
-                    BalanceSection(profileViewModel = profileViewModel)
+                    BalanceSection(
+                        profileViewModel = profileViewModel,
+                        onAddExpenseClick = {
+                            navController.navigate("add_expense")
+                        },
+                        onAddIncomeClick = {
+                            navController.navigate("add_income")
+                        }
+                    )
                     Text(
                         "Список Доходов",
                         color = Color.White,
@@ -132,8 +145,13 @@ fun ProfileScreen(
                         items(successState.incomes.size) { index ->
                             IncomeRow(
                                 income = successState.incomes[index],
-                                onEdit = { /* TODO: */ },
-                                onDelete = { profileViewModel.deleteIncome(it.id) },
+                                onEdit = {
+                                    profileViewModel.setEditingIncome(it)
+                                    navController.navigate("add_income?isEdit=true")
+                                },
+                                onDelete = {
+                                    profileViewModel.setDeletingIncome(it)
+                                },
                                 currency = "RUB"
                             )
                         }
@@ -141,6 +159,18 @@ fun ProfileScreen(
                 }
             }
         }
+    }
+    val income = profileViewModel.deletingIncome.collectAsState().value
+    if (income != null) {
+        ConfirmDialog(
+            message = "Вы точно хотите удалить доход от '${income.date.toFormattedDate()}'?",
+            onConfirm = { profileViewModel.deleteIncome(income.id) },
+            item = income,
+            onDismiss = {
+                profileViewModel.stopDeletingIncome()
+            },
+            title = "Удаление дохода"
+        )
     }
 }
 

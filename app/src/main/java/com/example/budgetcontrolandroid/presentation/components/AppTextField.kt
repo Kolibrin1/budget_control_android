@@ -81,7 +81,7 @@ fun AppTextField(
     modifier: Modifier = Modifier,
     hintStyle: TextStyle? = null
 ) {
-    var text by remember { mutableStateOf(value) }
+    var text = value
     val focusManager = LocalFocusManager.current
     val interactionSource = remember { MutableInteractionSource() }
 
@@ -158,14 +158,15 @@ fun AppTextField(
                     Box(
                         modifier = Modifier
                             .weight(1f)
-                            .padding(vertical = 2.dp)
+                            .padding(vertical = 2.dp),
+                        contentAlignment = Alignment.CenterStart
                     ) {
                         innerTextField()
                         if (hintText != null && text.isEmpty()) {
                             Text(
                                 text = hintText,
                                 style = hintStyle ?: TextStyle(
-                                    color = AppColors.white.copy(alpha = 0.6f),
+                                    color = AppColors.primary.copy(alpha = 0.8f),
                                     fontSize = 14.sp
                                 ),
                                 modifier = Modifier.padding(start = 4.dp)
@@ -180,7 +181,7 @@ fun AppTextField(
                 }
             }
         )
-        if(errorText != null) {
+        if (errorText != null) {
             Text(
                 text = errorText,
                 style = AppTypography.textTheme.bodySmall.copy(color = AppColors.error),
@@ -195,6 +196,7 @@ private fun AppTextFieldPreview() {
     AppTextField(
         value = "",
         onValueChange = {},
-        colorBorder = AppColors.primary
+        colorBorder = AppColors.primary,
+        hintText = "Login"
     )
 }

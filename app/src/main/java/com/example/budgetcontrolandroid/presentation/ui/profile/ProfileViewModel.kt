@@ -3,6 +3,7 @@ package com.example.budgetcontrolandroid.presentation.ui.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.budgetcontrolandroid.data.remote.models.CategoryDto
+import com.example.budgetcontrolandroid.data.remote.models.ExpenseDto
 import com.example.budgetcontrolandroid.data.remote.models.IncomeDto
 import com.example.budgetcontrolandroid.data.remote.models.ProfileDto
 import com.example.budgetcontrolandroid.domain.repositories.CategoryRepository
@@ -37,17 +38,42 @@ class ProfileViewModel @Inject constructor(
         loadIncomes()
     }
 
+    private val _editingIncome = MutableStateFlow<IncomeDto?>(null)
+
+    fun setEditingIncome(income: IncomeDto) {
+        _editingIncome.value = income
+    }
+
+    fun getEditingIncome() : IncomeDto {
+        val currentState = _editingIncome.value
+        _editingIncome.value = null
+        return currentState!!
+    }
+
+    private val _deletingIncome = MutableStateFlow<IncomeDto?>(null)
+    var deletingIncome = _deletingIncome.asStateFlow()
+
+    fun setDeletingIncome(income: IncomeDto) {
+        _deletingIncome.value = income
+    }
+
+    fun stopDeletingIncome() {
+        _deletingIncome.value = null
+    }
+
     fun deleteIncome(incomeId: Int) {
         viewModelScope.launch {
             try {
                 deleteIncomeUseCase(incomeId)
-                // Перезагружаем после удаления
                 val currentState = _state.value
                 if (currentState is ProfileState.SuccessState) {
+                    loadProfile()
                     loadIncomes()
                 }
             } catch (e: Exception) {
                 _state.value = ProfileState.ErrorState(e.message ?: "Ошибка удаления")
+            } finally {
+                stopDeletingIncome()
             }
         }
     }

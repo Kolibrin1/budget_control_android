@@ -51,16 +51,19 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.navigation.NavController
 import androidx.wear.compose.material.ExperimentalWearMaterialApi
 import androidx.wear.compose.material.rememberSwipeableState
 import androidx.wear.compose.material.swipeable
 import coil.compose.AsyncImage
 import coil.decode.SvgDecoder
 import coil.request.ImageRequest
+import com.example.budgetcontrolandroid.common.toFormattedDate
 import com.example.budgetcontrolandroid.data.remote.models.ExpenseDto
 import com.example.budgetcontrolandroid.presentation.theme.AppColors
 import com.example.budgetcontrolandroid.presentation.theme.AppTypography
 import com.example.budgetcontrolandroid.presentation.ui.auth.components.DisplayGifFromDrawable
+import com.example.budgetcontrolandroid.presentation.ui.profile.components.ConfirmDialog
 import com.example.budgetcontrolandroid.presentation.ui.profile.toComposeColor
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
@@ -73,8 +76,9 @@ import java.time.format.DateTimeFormatter
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DiagramScreen(
+    navController: NavController,
     modifier: Modifier,
-    diagramViewModel: DiagramViewModel = hiltViewModel()
+    diagramViewModel: DiagramViewModel = hiltViewModel(navController.getBackStackEntry("diagram"))
 ) {
     val state by diagramViewModel.state.collectAsState()
     val selectedType by diagramViewModel.selectedType.collectAsState()
@@ -97,7 +101,7 @@ fun DiagramScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .wrapContentHeight() // Адаптируется под контент
+                        .wrapContentHeight()
                         .padding(16.dp)
                 ) {
                     Text("Выберите период", modifier = Modifier.padding(bottom = 12.dp))
@@ -258,8 +262,13 @@ fun DiagramScreen(
                         items(successState.expenses.size) { index ->
                             ExpenseRow(
                                 expense = successState.expenses[index],
-                                onEdit = { /* TODO: */ },
-                                onDelete = { diagramViewModel.deleteExpense(it.id) },
+                                onEdit = {
+                                    diagramViewModel.setEditingExpense(it)
+                                    navController.navigate("add_expense?isEdit=true")
+                                },
+                                onDelete = {
+                                    diagramViewModel.setDeletingExpense(it)
+                                },
                                 currency = "RUB"
                             )
                         }
@@ -267,6 +276,18 @@ fun DiagramScreen(
                 }
             }
         }
+    }
+    val expense = diagramViewModel.deletingExpense.collectAsState().value
+    if (expense != null) {
+        ConfirmDialog(
+            message = "Вы точно хотите удалить расход от '${expense.date.toFormattedDate()}'?",
+            onConfirm = { diagramViewModel.deleteExpense(expense.id) },
+            item = expense,
+            onDismiss = {
+                diagramViewModel.stopDeletingExpense()
+            },
+            title = "Удаление расхода"
+        )
     }
 }
 

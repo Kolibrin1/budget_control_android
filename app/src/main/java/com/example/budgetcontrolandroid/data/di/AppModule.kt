@@ -20,6 +20,7 @@ import com.example.budgetcontrolandroid.domain.repositories.IncomeRepository
 import com.example.budgetcontrolandroid.domain.repositories.ProfileRepository
 import com.example.budgetcontrolandroid.domain.usecases.auth.RefreshTokenUseCase
 import com.example.budgetcontrolandroid.domain.utils.InstantDateDeserializer
+import com.example.budgetcontrolandroid.domain.utils.InstantDateSerializer
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import dagger.Module
@@ -92,6 +93,9 @@ object AppModule {
     fun provideGson(): Gson = GsonBuilder().registerTypeAdapter(
         Instant::class.java,
         InstantDateDeserializer()
+    ).registerTypeAdapter(
+        Instant::class.java,
+        InstantDateSerializer()
     )
         .create()
 

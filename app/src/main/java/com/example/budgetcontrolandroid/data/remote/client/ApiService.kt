@@ -61,7 +61,7 @@ interface ApiService {
     @DELETE("/expenses/{id}")
     suspend fun deleteExpense(
         @Path("id") id: Int,
-    ) : Boolean
+    )
 
     @GET("/incomes/my")
     suspend fun getAllIncomes() : List<IncomeDto>
@@ -80,7 +80,7 @@ interface ApiService {
     @DELETE("/incomes/{id}")
     suspend fun deleteIncome(
         @Path("id") id: Int,
-    ) : Boolean
+    )
 
     @GET("/users/me")
     suspend fun getCurrentUser() : ProfileDto
